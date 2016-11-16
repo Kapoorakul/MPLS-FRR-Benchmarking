@@ -1,0 +1,44 @@
+interface Tunnel1000 ---Primary Tunnel
+ip unnumbered Loopback0
+tunnel destination 3.3.3.3
+tunnel mode mpls traffic-eng
+tunnel mpls traffic-eng autoroute announce
+tunnel mpls traffic-eng path-option 1 explicit name PRI_LSP ---Predefined Path
+tunnel mpls traffic-eng fast-reroute ---Enabling the fast reroute on the primary tunnel
+no routing dynamic
+!
+interface Tunnel2000 ---Backup Tunnel
+ip unnumbered Loopback0
+tunnel destination 3.3.3.3
+tunnel mode mpls traffic-eng
+tunnel mpls traffic-eng path-option 1 explicit name SEC_LSP
+no routing dynamic
+!
+interface Serial1/0 ---backup tunnels are configured
+ip address 192.168.23.1 255.255.255.252
+mpls traffic-eng tunnels
+mpls traffic-eng backup-path Tunnel2000
+mpls ip
+ip rsvp signalling hello
+!
+router ospf 10 ---IGP Protocol
+mpls traffic-eng router-id Loopback0
+mpls traffic-eng area 0
+log-adjacency-changes
+network 0.0.0.0 255.255.255.255 area 0
+!
+ip rsvp signalling hello
+!
+ip explicit-path name PRI_LSP enable
+next-address 192.168.42.2
+next-address 192.168.23.2
+next-address 192.168.35.2
+next-address 5.5.5.5
+!
+ip explicit-path name SEC_LSP enable
+next-address 192.168.12.2
+next-address 192.168.13.2
+next-address 3.3.3.3
+!
+mpls ldp router-id Loopback0 force
+!
